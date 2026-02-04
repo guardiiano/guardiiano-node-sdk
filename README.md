@@ -152,7 +152,7 @@ Licensed under [MIT](./LICENSE).
 <a id="installazione"></a>
 ## Installazione
 
-Installa le dipendenze nel tuo progetto come di consueto.
+**T.B.D.**
 
 <a id="superficie-api"></a>
 ## Superficie API
@@ -192,7 +192,7 @@ export interface Action<M = unknown> {
 Gli errori sono esportati sia dal package principale sia dall'entrypoint dedicato:
 
 ```ts
-import { GuardiianoSDKError, GuardiianoNetworkError } from "guardiiano-sdk/errors";
+import { GuardiianoSDKError, GuardiianoNetworkError } from "guardiiano-node-sdk/errors";
 ```
 
 <a id="interfaccia-guardiianosdkapi"></a>
@@ -294,7 +294,7 @@ Questo permette di disabilitare il retry per singole operazioni anche se l'SDK Ã
 ### Creazione SDK
 
 ```ts
-import { createGuardiianoSDK } from "guardiiano-sdk";
+import { createGuardiianoSDK } from "guardiiano-node-sdk";
 
 const sdk = createGuardiianoSDK("https://api.guardiiano.example", {
   withRetry: true,
@@ -311,7 +311,7 @@ const sdk = createGuardiianoSDK("https://api.guardiiano.example", {
 ### Creazione SDK con parametri di default
 
 ```ts
-import { createGuardiianoSDK } from "guardiiano-sdk";
+import { createGuardiianoSDK } from "guardiiano-node-sdk";
 
 const sdk = createGuardiianoSDK("https://api.guardiiano.example");
 ```
@@ -382,7 +382,7 @@ Il plugin decora Fastify con `guardiiano` ed espone la stessa API dell'SDK.
 
 ```ts
 import Fastify from "fastify";
-import guardiianoSdkPlugin from "guardiiano-sdk";
+import guardiianoSdkPlugin from "guardiiano-node-sdk";
 
 const app = Fastify({ logger: true });
 
@@ -405,7 +405,7 @@ app.register(guardiianoSdkPlugin, {
 
 ```ts
 import Fastify from "fastify";
-import guardiianoSdkPlugin, { isDataSubject } from "guardiiano-sdk";
+import guardiianoSdkPlugin, { isDataSubject } from "guardiiano-node-sdk";
 
 interface Candidate {
   firstName: string;
@@ -481,7 +481,7 @@ Invocando `GET /candidates/:token` dell'esempio in `example.ts`, ecco due rispos
 
 ```ts
 import Fastify from "fastify";
-import guardiianoSdkPlugin from "guardiiano-sdk";
+import guardiianoSdkPlugin from "guardiiano-node-sdk";
 
 const app = Fastify({ logger: true });
 
@@ -498,7 +498,7 @@ app.get("/candidates/:token/no-retry", async (request) => {
 
 ```ts
 import Fastify from "fastify";
-import guardiianoSdkPlugin from "guardiiano-sdk";
+import guardiianoSdkPlugin from "guardiiano-node-sdk";
 
 const app = Fastify({ logger: true });
 
@@ -519,8 +519,8 @@ app.get("/metrics", async () => {
 
 ```ts
 import Fastify from "fastify";
-import guardiianoSdkPlugin from "guardiiano-sdk";
-import { GuardiianoSDKError, GuardiianoNetworkError } from "guardiiano-sdk/errors";
+import guardiianoSdkPlugin from "guardiiano-node-sdk";
+import { GuardiianoSDKError, GuardiianoNetworkError } from "guardiiano-node-sdk/errors";
 
 const app = Fastify({ logger: true });
 
@@ -558,8 +558,8 @@ app.get("/candidates/:token/safe", async (request, reply) => {
 
 ```ts
 import Fastify from "fastify";
-import guardiianoSdkPlugin from "guardiiano-sdk";
-import { GuardiianoSDKError } from "guardiiano-sdk/errors";
+import guardiianoSdkPlugin from "guardiiano-node-sdk";
+import { GuardiianoSDKError } from "guardiiano-node-sdk/errors";
 
 const app = Fastify({ logger: true });
 
@@ -584,7 +584,7 @@ app.get("/candidates/:token/log-trace", async (request, reply) => {
 
 ```ts
 import Fastify from "fastify";
-import guardiianoSdkPlugin from "guardiiano-sdk";
+import guardiianoSdkPlugin from "guardiiano-node-sdk";
 import { Static, Type } from "@sinclair/typebox";
 
 const app = Fastify({ logger: true });
@@ -618,7 +618,7 @@ app.get<{
 
 ```ts
 import Fastify from "fastify";
-import guardiianoSdkPlugin from "guardiiano-sdk";
+import guardiianoSdkPlugin from "guardiiano-node-sdk";
 
 const app = Fastify({ logger: true });
 
@@ -639,7 +639,7 @@ app.get("/candidates/:token/min", async (request) => {
 ### Esempio con retry globale disabilitato e retry per chiamata
 
 ```ts
-import { createGuardiianoSDK } from "guardiiano-sdk";
+import { createGuardiianoSDK } from "guardiiano-node-sdk";
 
 const sdk = createGuardiianoSDK("https://api.guardiiano.example", {
   withRetry: false,
@@ -652,7 +652,7 @@ await sdk.getMetrics({ withRetry: true }); // abilita il retry solo qui
 ### Esempio con allowlist personalizzata dei retry
 
 ```ts
-import { createGuardiianoSDK } from "guardiiano-sdk";
+import { createGuardiianoSDK } from "guardiiano-node-sdk";
 
 const sdk = createGuardiianoSDK("https://api.guardiiano.example", {
   retryableStatusCodes: [429, 503],
@@ -663,7 +663,7 @@ const sdk = createGuardiianoSDK("https://api.guardiiano.example", {
 ### Esempio con backoff aggressivo
 
 ```ts
-import { createGuardiianoSDK } from "guardiiano-sdk";
+import { createGuardiianoSDK } from "guardiiano-node-sdk";
 
 const sdk = createGuardiianoSDK("https://api.guardiiano.example", {
   maxRetries: 5,
@@ -678,7 +678,7 @@ const sdk = createGuardiianoSDK("https://api.guardiiano.example", {
 ### Esempio di utilizzo `calculateBackoffDelay`
 
 ```ts
-import { calculateBackoffDelay } from "guardiiano-sdk";
+import { calculateBackoffDelay } from "guardiiano-node-sdk";
 
 const delay = calculateBackoffDelay(2, 200, 2000, 2, 200);
 console.log(`Delay calcolato: ${delay}ms`);
@@ -688,7 +688,7 @@ console.log(`Delay calcolato: ${delay}ms`);
 ### Esempio di invio Action con payload tipizzato
 
 ```ts
-import { createGuardiianoSDK } from "guardiiano-sdk";
+import { createGuardiianoSDK } from "guardiiano-node-sdk";
 
 const sdk = createGuardiianoSDK("https://api.guardiiano.example");
 
@@ -711,7 +711,7 @@ await sdk.postAction<ActionPayload>({
 ### Esempio di metrics tipizzate
 
 ```ts
-import { createGuardiianoSDK } from "guardiiano-sdk";
+import { createGuardiianoSDK } from "guardiiano-node-sdk";
 
 const sdk = createGuardiianoSDK("https://api.guardiiano.example");
 
@@ -724,7 +724,7 @@ const metrics = await sdk.getMetrics<Metrics>({});
 ### Esempio con timeout per richiesta
 
 ```ts
-import { createGuardiianoSDK } from "guardiiano-sdk";
+import { createGuardiianoSDK } from "guardiiano-node-sdk";
 
 const sdk = createGuardiianoSDK("https://api.guardiiano.example");
 
@@ -747,8 +747,8 @@ const result = await withTimeout(
 
 ```ts
 import Fastify from "fastify";
-import guardiianoSdkPlugin from "guardiiano-sdk";
-import { GuardiianoSDKError, GuardiianoNetworkError } from "guardiiano-sdk/errors";
+import guardiianoSdkPlugin from "guardiiano-node-sdk";
+import { GuardiianoSDKError, GuardiianoNetworkError } from "guardiiano-node-sdk/errors";
 
 const app = Fastify({ logger: true });
 
@@ -775,8 +775,8 @@ app.addHook("onError", async (request, reply, error) => {
 
 ```ts
 import Fastify from "fastify";
-import guardiianoSdkPlugin from "guardiiano-sdk";
-import { GuardiianoSDKError } from "guardiiano-sdk/errors";
+import guardiianoSdkPlugin from "guardiiano-node-sdk";
+import { GuardiianoSDKError } from "guardiiano-node-sdk/errors";
 
 const logger = {
   level: "info",
@@ -813,7 +813,7 @@ app.get("/candidates/:token/log", async (request) => {
 
 ```ts
 import Fastify from "fastify";
-import guardiianoSdkPlugin from "guardiiano-sdk";
+import guardiianoSdkPlugin from "guardiiano-node-sdk";
 import CircuitBreaker from "opossum";
 
 const app = Fastify({ logger: true });
@@ -844,8 +844,8 @@ app.get("/candidates/:token/breaker", async (request, reply) => {
 ### Esempio timeout + retry con policy separate (con logging e stop su errori non transienti)
 
 ```ts
-import { createGuardiianoSDK } from "guardiiano-sdk";
-import { GuardiianoSDKError } from "guardiiano-sdk/errors";
+import { createGuardiianoSDK } from "guardiiano-node-sdk";
+import { GuardiianoSDKError } from "guardiiano-node-sdk/errors";
 
 const sdk = createGuardiianoSDK("https://api.guardiiano.example", {
   withRetry: true, // retry interni SDK
@@ -939,7 +939,7 @@ L'SDK genera un errore quando riceve uno status non in allowlist o quando esauri
 ## Esempio wrapper per retry custom per method
 
 ```ts
-import { GuardiianoSDKApi } from "guardiiano-sdk";
+import { GuardiianoSDKApi } from "guardiiano-node-sdk";
 
 const withMethodRetry = <T extends GuardiianoSDKApi>(sdk: T) => ({
   ...sdk,
