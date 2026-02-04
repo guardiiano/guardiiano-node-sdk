@@ -2,6 +2,10 @@
 
 SDK Node.js e plugin Fastify per il progetto Guardiiano.
 
+## License
+
+Licensed under [MIT](./LICENSE).
+
 **Nota importante:** questo SDK è in fase di sviluppo. Al momento sono implementati solo i metodi `postAction`, `identifyDataSubject`, `getDataSubject` e `getMetrics`.
 
 <a id="indice"></a>
@@ -9,6 +13,7 @@ SDK Node.js e plugin Fastify per il progetto Guardiiano.
 
 **SDK**
 - [guardiiano-node-sdk](#guardiiano-node-sdk)
+  - [License](#license)
   - [Indice](#indice)
   - [Funzionalità](#funzionalità)
   - [Requisiti](#requisiti)
@@ -72,6 +77,7 @@ SDK Node.js e plugin Fastify per il progetto Guardiiano.
 
 **Esempi**
 - [guardiiano-node-sdk](#guardiiano-node-sdk)
+  - [License](#license)
   - [Indice](#indice)
   - [Funzionalità](#funzionalità)
   - [Requisiti](#requisiti)

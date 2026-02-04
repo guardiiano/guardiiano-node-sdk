@@ -79,7 +79,6 @@ export function createGuardiianoSDK(baseUrl: string, options?: RetryOptions): Gu
     backoffFactor: number,
     jitterMs: number,
   ) {
-    // Formula: delay = min(maxDelayMs, min(maxDelayMs, baseDelayMs * backoffFactor ** attempt) + jitter(0..jitterMs))
     const delay = calculateBackoffDelay(attempt, baseDelayMs, maxDelayMs, backoffFactor, jitterMs);
     await new Promise((resolve) => setTimeout(resolve, delay));
   }
