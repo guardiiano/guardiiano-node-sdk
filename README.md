@@ -56,11 +56,8 @@ Licensed under [MIT](./LICENSE).
     - [Esempio logging strutturato con `pino`](#esempio-logging-strutturato-con-pino)
     - [Esempio `withRetry` + circuit breaker](#esempio-withretry--circuit-breaker)
     - [Esempio timeout + retry con policy separate (con logging e stop su errori non transienti)](#esempio-timeout--retry-con-policy-separate-con-logging-e-stop-su-errori-non-transienti)
-    - [Avvio Server](#avvio-server)
   - [Gestione errori](#gestione-errori)
-  - [Note](#note)
   - [Riepilogo metodi](#riepilogo-metodi)
-  - [Common pitfalls](#common-pitfalls)
   - [Esempio wrapper per retry custom per method](#esempio-wrapper-per-retry-custom-per-method)
   - [Appendice](#appendice)
     - [Approfondimento: Retry esponenziale con Jitter](#approfondimento-retry-esponenziale-con-jitter)
@@ -120,11 +117,8 @@ Licensed under [MIT](./LICENSE).
     - [Esempio logging strutturato con `pino`](#esempio-logging-strutturato-con-pino)
     - [Esempio `withRetry` + circuit breaker](#esempio-withretry--circuit-breaker)
     - [Esempio timeout + retry con policy separate (con logging e stop su errori non transienti)](#esempio-timeout--retry-con-policy-separate-con-logging-e-stop-su-errori-non-transienti)
-    - [Avvio Server](#avvio-server)
   - [Gestione errori](#gestione-errori)
-  - [Note](#note)
   - [Riepilogo metodi](#riepilogo-metodi)
-  - [Common pitfalls](#common-pitfalls)
   - [Esempio wrapper per retry custom per method](#esempio-wrapper-per-retry-custom-per-method)
   - [Appendice](#appendice)
     - [Approfondimento: Retry esponenziale con Jitter](#approfondimento-retry-esponenziale-con-jitter)
@@ -437,7 +431,8 @@ app.get("/candidates/:token", async (request) => {
 <a id="esempio-examplets-200-ok-e-404"></a>
 ### Esempio `example.ts` (200 OK e 404)
 
-Invocando `GET /candidates/:token` dell'esempio in `example.ts`, ecco due risposte reali:
+Invocando `GET /candidates/:token` dell'esempio in `example.ts`, è possibile testare l'invocazione a Guardiiano per la funzionalità gi GET DataSubject.
+Di seguito le risposte nel caso di successo e errore 200 OK o 404 Not Found:
 
 **404 Not Found (token inesistente)**
 
@@ -448,7 +443,7 @@ Invocando `GET /candidates/:token` dell'esempio in `example.ts`, ecco due rispos
   "details": {
     "code": 404,
     "error": "Not Found",
-    "message": "Data Subject not foundddddddd"
+    "message": "Data Subject not found"
   },
   "headers": {
     "content-length": "75",
@@ -893,29 +888,29 @@ for (let attempt = 1; attempt <= maxOuterRetries + 1; attempt += 1) {
 throw lastError;
 ```
 
-<a id="avvio-server"></a>
-### Avvio Server
-
-```ts
-const start = async () => {
-  const port = Number(process.env.PORT ?? "3000");
-  const host = process.env.HOST ?? "0.0.0.0";
-  await app.listen({ port, host });
-};
-
-void start();
-```
-
 <a id="gestione-errori"></a>
 ## Gestione errori
 
-L'SDK genera un errore quando riceve uno status non in allowlist o quando esaurisce i retry. Per gli errori HTTP viene lanciato `GuardiianoSDKError`, che include `responseBody`, `responseHeaders`, `requestId`, `correlationId` e gli header di tracing più comuni (se presenti): `traceparent`, `tracestate`, `baggage`, `x-amzn-trace-id`, `x-b3-traceid`, `x-b3-spanid`, `x-b3-parentspanid`, `x-b3-sampled`, `x-b3-flags`, `x-ot-span-context`. Per gli errori di rete viene lanciato `GuardiianoNetworkError` con `code` `ERR_NETWORK`.
+L'SDK genera un errore quando riceve uno status non in allowlist o quando esaurisce i retry. Per gli errori HTTP viene lanciato `GuardiianoSDKError`, che include
+- `responseBody`
+- `responseHeaders`
+- `requestId`
+- `correlationId`
 
-<a id="note"></a>
-## Note
+e gli header di tracing più comuni (se presenti):
 
-- Se vuoi fare retry solo per metodi idempotenti, implementa un wrapper che filtri per HTTP method prima di chiamare l'SDK.
-- Se il backend supporta idempotency keys, valutane l'uso per le `POST` che possono essere ritentate.
+- `traceparent`
+- `tracestate`
+- `baggage`
+- `x-amzn-trace-id`
+- `x-b3-traceid`
+- `x-b3-spanid`
+- `x-b3-parentspanid`
+- `x-b3-sampled`
+- `x-b3-flags`
+- `x-ot-span-context`.
+
+Per gli errori di rete viene lanciato `GuardiianoNetworkError` con `code` `ERR_NETWORK`.
 
 <a id="riepilogo-metodi"></a>
 ## Riepilogo metodi
@@ -926,14 +921,6 @@ L'SDK genera un errore quando riceve uno status non in allowlist o quando esauri
 | `identifyDataSubject` | Crea/identifica un data subject | `{ username, data, withRetry? }` |
 | `getDataSubject` | Recupera un data subject | `{ token, withRetry? }` |
 | `getMetrics` | Recupera metriche | `{ withRetry? }` |
-
-<a id="common-pitfalls"></a>
-## Common pitfalls
-
-1. Retry su errori applicativi: evita di includere 4xx non transitori nella allowlist.
-2. Retry su POST non idempotenti: abilitali solo se il backend gestisce deduplica o idempotency keys.
-3. Timeout troppo basso: può mascherare un problema di rete e far fallire tutti i retry.
-4. Logging dei trace headers: ricorda che potrebbero non essere presenti.
 
 <a id="esempio-wrapper-per-retry-custom-per-method"></a>
 ## Esempio wrapper per retry custom per method
@@ -961,11 +948,11 @@ const withMethodRetry = <T extends GuardiianoSDKApi>(sdk: T) => ({
 <a id="approfondimento-retry-esponenziale-con-jitter"></a>
 ### Approfondimento: Retry esponenziale con Jitter
 
-La strategia usata è un **retry esponenziale con jitter**:
+La strategia di retry usata è un **retry esponenziale con jitter**:
 - **Esponenziale**: il tempo di attesa cresce in modo esponenziale a ogni tentativo, così da dare al sistema il tempo di recuperare.
 - **Jitter**: si aggiunge una componente casuale al delay per evitare che molte richieste ritentino nello stesso istante (thundering herd).
 
-Perché questa tecnica:
+Motivi della scelta di questa tecnica:
 - Riduce i picchi di carico concentrati sui servizi upstream.
 - Minimizza il rischio di “sincronizzare” i retry di molti client.
 - Migliora la probabilità di successo quando gli errori sono transitori.
@@ -1025,7 +1012,7 @@ Esempio con `backoffFactor=3`:
 
 Spunti iniziali per approfondire il Jitter Backoff:
 - [Exponential Backoff And Jitter](https://aws.amazon.com/it/blogs/architecture/exponential-backoff-and-jitter/) – descrive le varianti di jitter (Full, Equal, Decorrelated) e spiega perché il semplice backoff non basta.
-- [Riprova la strategia nella v2 AWS SDK per JavaScript](https://docs.aws.amazon.com/it_it/sdk-for-javascript/v2/developer-guide/retry-strategy.html) – mostra come impostare i retry in AWS con JavaScript.
+- [Riprova la strategia nella v2 AWS SDK per JavaScript](https://docs.aws.amazon.com/it_it/sdk-for-javascript/v2/developer-guide/retry-strategy.html) – mostra come anche il client SDK per AWS impostare i retry con backoff esponenziale e jitter.
 - [Timeouts, retries, and backoff with jitter](https://aws.amazon.com/it/builders-library/timeouts-retries-and-backoff-with-jitter/#Jitter) – approfondisce le motivazioni operative dei retry e l'uso del jitter in sistemi distribuiti.
 
 
@@ -1053,12 +1040,12 @@ In caso di errore HTTP, usa `GuardiianoSDKError` e leggi `requestId`, `correlati
 <a id="configurare-un-timeout-per-tentativo"></a>
 ### Configurare un timeout per tentativo
 
-Per evitare retry troppo lenti, applica un timeout per singolo tentativo (es. `Promise.race`) è un budget complessivo per la richiesta, come mostrato negli esempi. Questo previene la propagazione di latenza eccessiva verso i chiamanti.
+Per evitare retry troppo lenti e previene la propagazione di latenza eccessiva verso i chiamanti, è utile applicare un timeout per singolo tentativo, ad esempio usando `Promise.race` come in alcuni degli esempi precedenti.
 
 <a id="retry-e-idempotenza"></a>
 ### Retry e idempotenza
 
-Per operazioni non idempotenti (es. `POST`), abilita il retry solo se il backend gestisce deduplica o idempotency keys. In caso contrario, preferisci `withRetry: false` per quelle operazioni.
+Per operazioni non idempotenti (es. `POST`), abilita il retry solo se il backend gestisce l'idempotenza (non è il caso di Guardiiano). In caso contrario, come per Guardiiano, meglio usare `withRetry: false` per quelle operazioni, come ad esempio per il default nella `identifyDataSubject()`.
 
 <a id="osservabilita-e-correlationid"></a>
 ### Osservabilità e `correlationId`

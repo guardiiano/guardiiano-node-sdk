@@ -213,7 +213,7 @@ export function createGuardiianoSDK(baseUrl: string, options?: RetryOptions): Gu
     async identifyDataSubject<T>({
       username,
       data,
-      withRetry = true,
+      withRetry = false,
     }: {
       username: string;
       data: T;
