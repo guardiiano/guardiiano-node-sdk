@@ -933,7 +933,7 @@ const withMethodRetry = <T extends GuardiianoSDKApi>(sdk: T) => ({
   postAction: (params: Parameters<T["postAction"]>[0]) =>
     sdk.postAction({ ...params, withRetry: false }),
   identifyDataSubject: (params: Parameters<T["identifyDataSubject"]>[0]) =>
-    sdk.identifyDataSubject({ ...params, withRetry: true }),
+    sdk.identifyDataSubject({ ...params, withRetry: false }),
   getDataSubject: (params: Parameters<T["getDataSubject"]>[0]) =>
     sdk.getDataSubject({ ...params, withRetry: true }),
   getMetrics: (params?: Parameters<T["getMetrics"]>[0]) =>
