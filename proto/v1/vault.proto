@@ -1,0 +1,521 @@
+syntax = "proto3";
+
+package guardiiano.v1;
+
+option go_package = "gitlab.itresources.it/guardiiano/guardiiano/internal/genproto/grpc/v1;grpcv1";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+service VaultService {
+  rpc CreateDataSubject(CreateDataSubjectRequest) returns (DataSubjectToken);
+  rpc RegisterDataSubject(RegisterDataSubjectRequest) returns (DataSubjectResponse);
+  rpc GetDataSubjectByToken(GetDataSubjectByTokenRequest) returns (DataSubjectResponse);
+  rpc ListDataSubjects(ListDataSubjectsRequest) returns (DataSubjectListResponse);
+  rpc SearchDataSubjects(SearchDataSubjectsRequest) returns (DataSubjectListResponse);
+  rpc SearchDataSubjectsByIndex(SearchDataSubjectsByIndexRequest) returns (DataSubjectSearchResults);
+  rpc ListBlindIndexFields(google.protobuf.Empty) returns (ListBlindIndexFieldsResponse);
+  rpc GetDataSubjectTagValues(GetDataSubjectTagValuesRequest) returns (GetDataSubjectTagValuesResponse);
+  rpc UpdateDataSubject(UpdateDataSubjectRequest) returns (DataSubjectResponse);
+  rpc DeleteDataSubject(DeleteDataSubjectRequest) returns (google.protobuf.Empty);
+  rpc UpdateDataSubjectSubjectContext(UpdateDataSubjectSubjectContextRequest) returns (DataSubjectResponse);
+  rpc PreviewDataSubjectContextTransition(TransitionDataSubjectContextRequest) returns (TransitionDataSubjectContextResponse);
+  rpc TransitionDataSubjectContext(TransitionDataSubjectContextRequest) returns (TransitionDataSubjectContextResponse);
+
+  rpc ListDataSubjectConsents(ListDataSubjectConsentsRequest) returns (ListDataSubjectConsentsResponse);
+  rpc SubmitDataSubjectConsents(SubmitDataSubjectConsentsRequest) returns (ListDataSubjectConsentsResponse);
+  rpc ListDataSubjectConsentEvents(ListDataSubjectConsentEventsRequest) returns (ListDataSubjectConsentEventsResponse);
+
+  rpc CreateSubjectContext(CreateSubjectContextRequest) returns (SubjectContext);
+  rpc ListSubjectContexts(google.protobuf.Empty) returns (ListSubjectContextsResponse);
+  rpc GetSubjectContext(GetSubjectContextRequest) returns (SubjectContext);
+  rpc UpdateSubjectContext(UpdateSubjectContextRequest) returns (SubjectContext);
+  rpc DeleteSubjectContext(DeleteSubjectContextRequest) returns (google.protobuf.Empty);
+
+  rpc CreateDataTag(CreateDataTagRequest) returns (DataTag);
+  rpc ListDataTags(google.protobuf.Empty) returns (ListDataTagsResponse);
+  rpc GetDataTag(GetDataTagRequest) returns (DataTag);
+  rpc UpdateDataTag(UpdateDataTagRequest) returns (DataTag);
+  rpc DeleteDataTag(DeleteDataTagRequest) returns (google.protobuf.Empty);
+
+  rpc CreatePrivacyPolicy(CreatePrivacyPolicyRequest) returns (PrivacyPolicy);
+  rpc ListPrivacyPolicies(google.protobuf.Empty) returns (ListPrivacyPoliciesResponse);
+  rpc GetPrivacyPolicy(GetPrivacyPolicyRequest) returns (PrivacyPolicy);
+  rpc UpdatePrivacyPolicy(UpdatePrivacyPolicyRequest) returns (PrivacyPolicy);
+  rpc DeletePrivacyPolicy(DeletePrivacyPolicyRequest) returns (google.protobuf.Empty);
+
+  rpc CreatePolicyRule(CreatePolicyRuleRequest) returns (PolicyRule);
+  rpc ListPolicyRules(google.protobuf.Empty) returns (ListPolicyRulesResponse);
+  rpc GetPolicyRule(GetPolicyRuleRequest) returns (PolicyRule);
+  rpc UpdatePolicyRule(UpdatePolicyRuleRequest) returns (PolicyRule);
+  rpc DeletePolicyRule(DeletePolicyRuleRequest) returns (google.protobuf.Empty);
+
+  rpc CreateConsentDefinition(CreateConsentDefinitionRequest) returns (ConsentDefinition);
+  rpc ListConsentDefinitions(google.protobuf.Empty) returns (ListConsentDefinitionsResponse);
+  rpc GetConsentDefinition(GetConsentDefinitionRequest) returns (ConsentDefinition);
+  rpc UpdateConsentDefinition(UpdateConsentDefinitionRequest) returns (ConsentDefinition);
+  rpc DeleteConsentDefinition(DeleteConsentDefinitionRequest) returns (google.protobuf.Empty);
+
+  rpc GetMetadataSchema(GetMetadataSchemaRequest) returns (MetadataSchemaResponse);
+
+  rpc ListPurgeQueue(ListPurgeQueueRequest) returns (ListPurgeQueueResponse);
+  rpc ApprovePurgeQueueItem(ReviewPurgeQueueItemRequest) returns (google.protobuf.Empty);
+  rpc LegalHoldPurgeQueueItem(ReviewPurgeQueueItemRequest) returns (google.protobuf.Empty);
+  rpc RejectPurgeQueueItem(ReviewPurgeQueueItemRequest) returns (google.protobuf.Empty);
+}
+
+message DataSubjectToken {
+  string id = 1;
+  string ds_token = 2;
+}
+
+message DataSubjectResponse {
+  string id = 1;
+  string ds_token = 2;
+  string subject_context_code = 3;
+  google.protobuf.Struct data = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message DataSubjectListResponse {
+  repeated DataSubjectResponse items = 1;
+  int32 total = 2;
+  int32 limit = 3;
+  int32 offset = 4;
+}
+
+message DataSubjectSearchResults {
+  repeated DataSubjectResponse items = 1;
+}
+
+message BlindIndexFilter {
+  string name = 1;
+  string value = 2;
+}
+
+message CreateDataSubjectRequest {
+  string system_uid = 1;
+  string subject_context_code = 2;
+  google.protobuf.Struct data = 3;
+}
+
+message RegisterTagPayload {
+  string data_tag_code = 1;
+  google.protobuf.Struct data = 2;
+}
+
+message ConsentSubmission {
+  string consent_definition_id = 1;
+  string policy_rule_id = 2;
+  bool granted = 3;
+}
+
+message RegisterDataSubjectRequest {
+  string system_uid = 1;
+  string subject_context_code = 2;
+  repeated RegisterTagPayload tags = 3;
+  repeated ConsentSubmission consents = 4;
+}
+
+message GetDataSubjectByTokenRequest {
+  string token = 1;
+}
+
+message ListDataSubjectsRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+message SearchDataSubjectsRequest {
+  string ds_token = 1;
+  string subject_context_code = 2;
+  repeated BlindIndexFilter indices = 3;
+  int32 limit = 4;
+  int32 offset = 5;
+}
+
+message SearchDataSubjectsByIndexRequest {
+  string index = 1;
+  string value = 2;
+}
+
+message ListBlindIndexFieldsResponse {
+  repeated string items = 1;
+}
+
+message DataSubjectTagValue {
+  string id = 1;
+  string data_subject_id = 2;
+  string data_tag_id = 3;
+  string data_tag_code = 4;
+  google.protobuf.Struct data = 5;
+  google.protobuf.Timestamp expires_at = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+message GetDataSubjectTagValuesRequest {
+  string token = 1;
+}
+
+message GetDataSubjectTagValuesResponse {
+  repeated DataSubjectTagValue items = 1;
+}
+
+message UpdateDataSubjectRequest {
+  string id = 1;
+  google.protobuf.Struct data = 2;
+}
+
+message DeleteDataSubjectRequest {
+  string id = 1;
+}
+
+message UpdateDataSubjectSubjectContextRequest {
+  string id = 1;
+  string subject_context_code = 2;
+}
+
+message TransitionDataSubjectContextRequest {
+  string id = 1;
+  string target_subject_context_code = 2;
+  string reason = 3;
+}
+
+message TransitionDataSubjectContextResponse {
+  string data_subject_id = 1;
+  string ds_token = 2;
+  string old_subject_context_code = 3;
+  string new_subject_context_code = 4;
+  repeated string carried_over_tags = 5;
+  repeated string required_new_tags = 6;
+  repeated string obsolete_tags_queued = 7;
+  repeated string consents_to_review = 8;
+}
+
+message DataSubjectConsent {
+  string id = 1;
+  string data_subject_id = 2;
+  string consent_definition_id = 3;
+  string policy_rule_id = 4;
+  bool granted = 5;
+  string source = 6;
+  bool review_required = 7;
+  string review_reason = 8;
+  google.protobuf.Timestamp review_marked_at = 9;
+  google.protobuf.Timestamp granted_at = 10;
+  google.protobuf.Timestamp revoked_at = 11;
+  string privacy_policy_id_snapshot = 12;
+  google.protobuf.Struct consent_definition_snapshot = 13;
+  google.protobuf.Struct policy_rule_snapshot = 14;
+  google.protobuf.Timestamp created_at = 15;
+  google.protobuf.Timestamp updated_at = 16;
+}
+
+message ListDataSubjectConsentsRequest {
+  string token = 1;
+}
+
+message SubmitDataSubjectConsentsRequest {
+  string token = 1;
+  repeated ConsentSubmission consents = 2;
+}
+
+message ListDataSubjectConsentsResponse {
+  repeated DataSubjectConsent items = 1;
+}
+
+message DataSubjectConsentEvent {
+  int64 id = 1;
+  string data_subject_id = 2;
+  string consent_definition_id = 3;
+  string policy_rule_id = 4;
+  string action = 5;
+  string reason = 6;
+  google.protobuf.Struct metadata = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message ListDataSubjectConsentEventsRequest {
+  string token = 1;
+  string action = 2;
+  int32 limit = 3;
+  int32 offset = 4;
+}
+
+message ListDataSubjectConsentEventsResponse {
+  repeated DataSubjectConsentEvent items = 1;
+}
+
+message SubjectContext {
+  string id = 1;
+  string code = 2;
+  string name = 3;
+  string description = 4;
+  bool is_active = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message CreateSubjectContextRequest {
+  string code = 1;
+  string name = 2;
+  string description = 3;
+  google.protobuf.BoolValue is_active = 4;
+}
+
+message GetSubjectContextRequest {
+  string id = 1;
+}
+
+message UpdateSubjectContextRequest {
+  string id = 1;
+  google.protobuf.StringValue code = 2;
+  google.protobuf.StringValue name = 3;
+  google.protobuf.StringValue description = 4;
+  google.protobuf.BoolValue is_active = 5;
+}
+
+message DeleteSubjectContextRequest {
+  string id = 1;
+}
+
+message ListSubjectContextsResponse {
+  repeated SubjectContext items = 1;
+}
+
+message DataTag {
+  string id = 1;
+  string code = 2;
+  string name = 3;
+  string description = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message CreateDataTagRequest {
+  string code = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message GetDataTagRequest {
+  string id = 1;
+}
+
+message UpdateDataTagRequest {
+  string id = 1;
+  google.protobuf.StringValue code = 2;
+  google.protobuf.StringValue name = 3;
+  google.protobuf.StringValue description = 4;
+}
+
+message DeleteDataTagRequest {
+  string id = 1;
+}
+
+message ListDataTagsResponse {
+  repeated DataTag items = 1;
+}
+
+message PrivacyPolicy {
+  string id = 1;
+  string code = 2;
+  int32 version = 3;
+  string title = 4;
+  string content = 5;
+  bool is_active = 6;
+  google.protobuf.Timestamp published_at = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+message CreatePrivacyPolicyRequest {
+  string code = 1;
+  int32 version = 2;
+  string title = 3;
+  string content = 4;
+  google.protobuf.BoolValue is_active = 5;
+  google.protobuf.Timestamp published_at = 6;
+}
+
+message GetPrivacyPolicyRequest {
+  string id = 1;
+}
+
+message UpdatePrivacyPolicyRequest {
+  string id = 1;
+  google.protobuf.StringValue title = 2;
+  google.protobuf.StringValue content = 3;
+  google.protobuf.BoolValue is_active = 4;
+  google.protobuf.Timestamp published_at = 5;
+  bool clear_published_at = 6;
+}
+
+message DeletePrivacyPolicyRequest {
+  string id = 1;
+}
+
+message ListPrivacyPoliciesResponse {
+  repeated PrivacyPolicy items = 1;
+}
+
+message PolicyRule {
+  string id = 1;
+  string subject_context_id = 2;
+  string subject_context_code = 3;
+  string data_tag_id = 4;
+  string data_tag_code = 5;
+  string privacy_policy_id = 6;
+  string privacy_policy_code = 7;
+  int32 privacy_policy_version = 8;
+  string legal_basis = 9;
+  string ui_mode = 10;
+  string schema_mode = 11;
+  google.protobuf.Struct field_schema = 12;
+  int32 retention_months = 13;
+  bool is_required = 14;
+  bool is_active = 15;
+  int32 display_order = 16;
+  string consent_text = 17;
+  repeated ConsentDefinition consent_definitions = 18;
+  google.protobuf.Timestamp created_at = 19;
+  google.protobuf.Timestamp updated_at = 20;
+}
+
+message CreatePolicyRuleRequest {
+  string subject_context_code = 1;
+  string data_tag_code = 2;
+  string privacy_policy_id = 3;
+  string legal_basis = 4;
+  string ui_mode = 5;
+  string schema_mode = 6;
+  google.protobuf.Struct field_schema = 7;
+  int32 retention_months = 8;
+  bool is_required = 9;
+  google.protobuf.BoolValue is_active = 10;
+  int32 display_order = 11;
+  string consent_text = 12;
+}
+
+message GetPolicyRuleRequest {
+  string id = 1;
+}
+
+message UpdatePolicyRuleRequest {
+  string id = 1;
+  google.protobuf.StringValue privacy_policy_id = 2;
+  google.protobuf.StringValue legal_basis = 3;
+  google.protobuf.StringValue ui_mode = 4;
+  google.protobuf.StringValue schema_mode = 5;
+  google.protobuf.Struct field_schema = 6;
+  bool has_field_schema = 7;
+  google.protobuf.Int32Value retention_months = 8;
+  google.protobuf.BoolValue is_required = 9;
+  google.protobuf.BoolValue is_active = 10;
+  google.protobuf.Int32Value display_order = 11;
+  google.protobuf.StringValue consent_text = 12;
+}
+
+message DeletePolicyRuleRequest {
+  string id = 1;
+}
+
+message ListPolicyRulesResponse {
+  repeated PolicyRule items = 1;
+}
+
+message ConsentDefinition {
+  string id = 1;
+  string policy_rule_id = 2;
+  string subject_context_code = 3;
+  string data_tag_code = 4;
+  string code = 5;
+  string name = 6;
+  string legal_basis = 7;
+  string ui_mode = 8;
+  string consent_text = 9;
+  bool is_active = 10;
+  int32 display_order = 11;
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp updated_at = 13;
+}
+
+message CreateConsentDefinitionRequest {
+  string policy_rule_id = 1;
+  string code = 2;
+  string name = 3;
+  string legal_basis = 4;
+  string ui_mode = 5;
+  string consent_text = 6;
+  google.protobuf.BoolValue is_active = 7;
+  int32 display_order = 8;
+}
+
+message GetConsentDefinitionRequest {
+  string id = 1;
+}
+
+message UpdateConsentDefinitionRequest {
+  string id = 1;
+  google.protobuf.StringValue code = 2;
+  google.protobuf.StringValue name = 3;
+  google.protobuf.StringValue legal_basis = 4;
+  google.protobuf.StringValue ui_mode = 5;
+  google.protobuf.StringValue consent_text = 6;
+  google.protobuf.BoolValue is_active = 7;
+  google.protobuf.Int32Value display_order = 8;
+}
+
+message DeleteConsentDefinitionRequest {
+  string id = 1;
+}
+
+message ListConsentDefinitionsResponse {
+  repeated ConsentDefinition items = 1;
+}
+
+message MetadataSchemaResponse {
+  SubjectContext subject_context = 1;
+  PrivacyPolicy master_policy = 2;
+  repeated PrivacyPolicy privacy_policies = 3;
+  repeated PolicyRule rules = 4;
+}
+
+message GetMetadataSchemaRequest {
+  string subject_context_code = 1;
+}
+
+message PurgeQueueItem {
+  string id = 1;
+  string data_subject_id = 2;
+  string data_subject_tag_value_id = 3;
+  string policy_rule_id = 4;
+  string data_tag_code = 5;
+  string status = 6;
+  google.protobuf.Timestamp scheduled_at = 7;
+  google.protobuf.Timestamp reviewed_at = 8;
+  string reviewed_by = 9;
+  string reason = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+}
+
+message ListPurgeQueueRequest {
+  string status = 1;
+  string data_tag_code = 2;
+  int32 limit = 3;
+  int32 offset = 4;
+}
+
+message ListPurgeQueueResponse {
+  repeated PurgeQueueItem items = 1;
+}
+
+message ReviewPurgeQueueItemRequest {
+  string id = 1;
+  string reason = 2;
+}

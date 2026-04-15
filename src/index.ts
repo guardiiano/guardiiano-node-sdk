@@ -1,4 +1,5 @@
 export { calculateBackoffDelay } from './backoff';
-export { GuardiianoNetworkError, GuardiianoSDKError } from './errors';
-export { createGuardiianoSDK, default, isDataSubject } from './sdk';
-export type { Action, DataSubject, GuardiianoSDKApi, RetryOptions } from './sdk';
+export { GuardiianoGRPCError, GuardiianoNetworkError, GuardiianoSDKError } from './errors';
+export { default } from './sdk';
+export * from './sdk';
+export { createGuardiianoGrpcSDK } from './grpc';

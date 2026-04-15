@@ -83,3 +83,28 @@ export class GuardiianoNetworkError extends Error {
     this.code = 'ERR_NETWORK';
   }
 }
+
+export class GuardiianoGRPCError extends Error {
+  readonly grpcCode: number;
+  readonly grpcStatus?: string;
+  readonly details?: string;
+  readonly metadata?: Record<string, string[]>;
+  readonly code: 'ERR_GRPC';
+
+  constructor(
+    grpcCode: number,
+    message: string,
+    options: {
+      grpcStatus?: string;
+      details?: string;
+      metadata?: Record<string, string[]>;
+    } = {},
+  ) {
+    super(message);
+    this.grpcCode = grpcCode;
+    this.grpcStatus = options.grpcStatus;
+    this.details = options.details;
+    this.metadata = options.metadata;
+    this.code = 'ERR_GRPC';
+  }
+}

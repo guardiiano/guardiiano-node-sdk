@@ -6,7 +6,9 @@ SDK Node.js e plugin Fastify per il progetto Guardiiano.
 
 Licensed under [MIT](./LICENSE).
 
-**Nota importante:** questo SDK è in fase di sviluppo. Al momento sono implementati solo i metodi `postAction`, `identifyDataSubject`, `getDataSubject` e `getMetrics`.
+**Nota importante:** lo SDK supporta ora due transport distinti:
+- `rest`, con superficie API completa lato SDK
+- `grpc`, con superficie ridotta e tipizzata a compile-time in base al `vault.proto`
 
 <a id="indice"></a>
 ## Indice
@@ -132,37 +134,67 @@ Licensed under [MIT](./LICENSE).
 <a id="funzionalita"></a>
 ## Funzionalità
 
-- Metodi SDK tipizzati per le API Guardiiano.
-- Retry con backoff esponenziale e jitter per errori transitori.
+- Client REST completo per la API Guardiiano.
+- Client gRPC dedicato per il dominio `vault`.
+- Selezione del transport a configurazione: `rest` oppure `grpc`.
+- Tipi TypeScript diversi a compile-time per REST e gRPC.
+- Retry con backoff esponenziale e jitter.
 - Plugin Fastify che espone `app.guardiiano`.
-- Tipi TypeScript completi, inclusi type guard.
+- Errori distinti per HTTP, rete e gRPC.
 
 <a id="requisiti"></a>
 ## Requisiti
 
 - Node.js con `fetch` disponibile (consigliato Node 18+).
 - Fastify `4.x - 5.x` per il plugin.
+- Per gRPC, il package usa `@grpc/grpc-js` e il `vault.proto` incluso nel repository.
 
 <a id="installazione"></a>
 ## Installazione
 
-**T.B.D.**
+```bash
+npm install guardiiano-node-sdk
+```
+
+Dipendenze runtime rilevanti:
+- REST: nessuna dipendenza aggiuntiva oltre a `fetch`
+- gRPC: incluse nel package (`@grpc/grpc-js`, `@grpc/proto-loader`, `google-proto-files`)
 
 <a id="superficie-api"></a>
 ## Superficie API
 
-L'SDK si crea con `createGuardiianoSDK(baseUrl, options?)` e ritorna un oggetto che implementa l'interfaccia `GuardiianoSDKApi`.
+L'SDK supporta tre modalità di creazione:
+
+```ts
+createGuardiianoSDK(baseUrl, options?)
+createGuardiianoSDK({ transport: "rest", baseUrl, ... })
+createGuardiianoSDK({ transport: "grpc", endpoint, ... })
+```
+
+Factory esplicite disponibili:
+
+```ts
+createGuardiianoRestSDK(baseUrl, options?)
+createGuardiianoGrpcSDK({ endpoint, ... })
+```
+
+Il tipo restituito cambia in base al transport:
+- REST: `GuardiianoRestSDKApi`
+- gRPC: `GuardiianoGrpcSDKApi`
+
+Questo significa che con gRPC l'autocomplete e il type-check mostrano solo i metodi realmente supportati.
 
 <a id="tipi"></a>
 ### Tipi
 
 ```ts
-export interface DataSubject<T = unknown> {
+export interface DataSubject<T extends object = JsonObject> {
   id: string;
   dsToken: string;
+  subject_context_code: string;
   data: T;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 ```
 
@@ -170,8 +202,8 @@ export interface DataSubject<T = unknown> {
 export interface Action<M = unknown> {
   userId: string;
   actionType: string;
-  timestamp: string;
-  payload: M;
+  timestamp?: string;
+  metadata?: M;
 }
 ```
 
@@ -186,33 +218,73 @@ export interface Action<M = unknown> {
 Gli errori sono esportati sia dal package principale sia dall'entrypoint dedicato:
 
 ```ts
-import { GuardiianoSDKError, GuardiianoNetworkError } from "guardiiano-node-sdk/errors";
+import {
+  GuardiianoGRPCError,
+  GuardiianoNetworkError,
+  GuardiianoSDKError
+} from "guardiiano-node-sdk/errors";
 ```
 
 <a id="interfaccia-guardiianosdkapi"></a>
-### Interfaccia GuardiianoSDKApi
+### Interfacce Pubbliche
 
 ```ts
-export interface GuardiianoSDKApi {
-  postAction<M>(params: { action: Action<M>; withRetry?: boolean }): Promise<void>;
-  identifyDataSubject<T>(params: {
-    username: string;
-    data: T;
-    withRetry?: boolean;
-  }): Promise<DataSubject<T>>;
-  getDataSubject<T = unknown>(params: { token: string; withRetry?: boolean }): Promise<DataSubject<T>>;
-  getMetrics<T = unknown>(params?: { withRetry?: boolean }): Promise<T>;
+export interface GuardiianoRestSDKApi {
+  transport: "rest";
+  // superficie completa REST
+}
+
+export interface GuardiianoGrpcSDKApi {
+  transport: "grpc";
+  // sottoinsieme gRPC del dominio vault
 }
 ```
+
+Metodi disponibili solo su REST:
+- `login`
+- `refreshAuth`
+- `createUser`
+- `listUsers`
+- `getAccount`
+- `createApiKey`
+- `postAction`
+- `getDashboardOverview`
+- `getPrivacyDashboard`
+- `getMetrics`
+- `uploadFile`
+- `listAuditLogs`
+
+Metodi disponibili sia su REST sia su gRPC:
+- `identifyDataSubject`
+- `registerDataSubject`
+- `getDataSubject`
+- `listDataSubjects`
+- `searchDataSubjects`
+- `updateDataSubject`
+- `deleteDataSubject`
+- `updateDataSubjectSubjectContext`
+- `transitionDataSubjectContext`
+- `previewTransitionDataSubjectContext`
+- `listDataSubjectConsents`
+- `listDataSubjectConsentEvents`
+- `submitDataSubjectConsents`
+- `create/list/get/update/delete` per `SubjectContext`, `DataTag`, `PrivacyPolicy`, `PolicyRule`, `ConsentDefinition`
+- `getMetadataSchema`
+- `listPurgeQueue`
+- `approvePurgeQueueItem`
+- `legalHoldPurgeQueueItem`
+- `rejectPurgeQueueItem`
 
 <a id="factory"></a>
 ### Factory
 
 ```ts
-createGuardiianoSDK(baseUrl: string, options?: RetryOptions): GuardiianoSDKApi
+createGuardiianoSDK(baseUrl: string, options?: GuardiianoSDKOptions): GuardiianoRestSDKApi
+createGuardiianoSDK(config: GuardiianoRestTransportConfig): GuardiianoRestSDKApi
+createGuardiianoSDK(config: GuardiianoGrpcTransportConfig): GuardiianoGrpcSDKApi
 ```
 
-Il `baseUrl` viene normalizzato rimuovendo lo slash finale.
+`baseUrl` REST viene normalizzato rimuovendo lo slash finale. Per gRPC va passato `endpoint`, ad esempio `localhost:9090`.
 
 <a id="retry"></a>
 ## Retry
@@ -290,7 +362,7 @@ Questo permette di disabilitare il retry per singole operazioni anche se l'SDK �
 ```ts
 import { createGuardiianoSDK } from "guardiiano-node-sdk";
 
-const sdk = createGuardiianoSDK("https://api.guardiiano.example", {
+const sdk = createGuardiianoSDK("https://api.guardiiano.example/api/v1", {
   withRetry: true,
   maxRetries: 4,
   baseDelayMs: 250,
@@ -299,6 +371,34 @@ const sdk = createGuardiianoSDK("https://api.guardiiano.example", {
   jitterMs: 150,
   retryableStatusCodes: [408, 429, 500, 502, 503, 504],
 });
+```
+
+### Creazione SDK REST esplicita
+
+```ts
+import { createGuardiianoSDK } from "guardiiano-node-sdk";
+
+const sdk = createGuardiianoSDK({
+  transport: "rest",
+  baseUrl: "https://api.guardiiano.example/api/v1",
+  bearerToken: process.env.GUARDIIANO_BEARER_TOKEN,
+  withRetry: true,
+});
+```
+
+### Creazione SDK gRPC esplicita
+
+```ts
+import { createGuardiianoSDK } from "guardiiano-node-sdk";
+
+const sdk = createGuardiianoSDK({
+  transport: "grpc",
+  endpoint: "localhost:9090",
+  bearerToken: process.env.GUARDIIANO_BEARER_TOKEN,
+  withRetry: true,
+});
+
+// sdk è tipizzato come GuardiianoGrpcSDKApi
 ```
 
 <a id="creazione-sdk-con-parametri-di-default"></a>
@@ -315,21 +415,22 @@ const sdk = createGuardiianoSDK("https://api.guardiiano.example");
 
 ```ts
 interface Candidate {
-  firstName: string;
-  lastName: string;
+  system_uid: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  phone: number;
+  phone: string;
 }
 
-// Un DataSubject può essere identificato con qualsiasi tipo di dato.
-// In questo esempio, Candidate è il tipo che identifica i DataSubject "Candidate".
 const subject = await sdk.identifyDataSubject<Candidate>({
-  username: "jane.doe",
+  system_uid: "candidate-001",
+  subject_context_code: "CANDIDATE",
   data: {
-    firstName: "Jane",
-    lastName: "Doe",
+    system_uid: "candidate-001",
+    first_name: "Jane",
+    last_name: "Doe",
     email: "jane@example.com",
-    phone: 123456789,
+    phone: "123456789",
   },
 });
 ```
@@ -353,7 +454,7 @@ await sdk.postAction({
     userId: "user-1",
     actionType: "candidate.created",
     timestamp: new Date().toISOString(),
-    payload: { source: "web" },
+    metadata: { source: "web" },
   },
   withRetry: true,
 });
@@ -374,6 +475,8 @@ Il plugin decora Fastify con `guardiiano` ed espone la stessa API dell'SDK.
 <a id="registrazione-plugin"></a>
 ### Registrazione Plugin
 
+REST:
+
 ```ts
 import Fastify from "fastify";
 import guardiianoSdkPlugin from "guardiiano-node-sdk";
@@ -381,7 +484,7 @@ import guardiianoSdkPlugin from "guardiiano-node-sdk";
 const app = Fastify({ logger: true });
 
 app.register(guardiianoSdkPlugin, {
-  baseUrl: "https://api.guardiiano.example",
+  baseUrl: "https://api.guardiiano.example/api/v1",
   retry: {
     withRetry: true,
     maxRetries: 3,
@@ -391,6 +494,22 @@ app.register(guardiianoSdkPlugin, {
     jitterMs: 150,
     retryableStatusCodes: [408, 429, 500, 502, 503, 504],
   },
+});
+```
+
+gRPC:
+
+```ts
+import Fastify from "fastify";
+import guardiianoSdkPlugin from "guardiiano-node-sdk";
+
+const app = Fastify({ logger: true });
+
+app.register(guardiianoSdkPlugin, {
+  transport: "grpc",
+  endpoint: "localhost:9090",
+  bearerToken: process.env.GUARDIIANO_BEARER_TOKEN,
+  withRetry: true,
 });
 ```
 
@@ -466,8 +585,8 @@ Di seguito le risposte nel caso di successo e errore 200 OK o 404 Not Found:
     "surname": "Bar",
     "username": "foo@bar.com"
   },
-  "createdAt": "2026-02-04T11:32:52.919104+01:00",
-  "updatedAt": "2026-02-04T11:32:52.919104+01:00"
+  "created_at": "2026-02-04T11:32:52.919104+01:00",
+  "updated_at": "2026-02-04T11:32:52.919104+01:00"
 }
 ```
 
@@ -697,7 +816,7 @@ await sdk.postAction<ActionPayload>({
     userId: "user-1",
     actionType: "candidate.created",
     timestamp: new Date().toISOString(),
-    payload: { source: "web", ip: "127.0.0.1" },
+    metadata: { source: "web", ip: "127.0.0.1" },
   },
 });
 ```
@@ -912,15 +1031,40 @@ e gli header di tracing più comuni (se presenti):
 
 Per gli errori di rete viene lanciato `GuardiianoNetworkError` con `code` `ERR_NETWORK`.
 
+Per gRPC viene lanciato `GuardiianoGRPCError`, che espone:
+- `grpcCode`
+- `grpcStatus`
+- `details`
+- `metadata`
+
 <a id="riepilogo-metodi"></a>
 ## Riepilogo metodi
 
-| Metodo | Descrizione | Parametri |
-| --- | --- | --- |
-| `postAction` | Invia un evento/azione | `{ action, withRetry? }` |
-| `identifyDataSubject` | Crea/identifica un data subject | `{ username, data, withRetry? }` |
-| `getDataSubject` | Recupera un data subject | `{ token, withRetry? }` |
-| `getMetrics` | Recupera metriche | `{ withRetry? }` |
+| Metodo | REST | gRPC | Note |
+| --- | --- | --- | --- |
+| `identifyDataSubject` | Sì | Sì | dominio vault |
+| `registerDataSubject` | Sì | Sì | dominio vault |
+| `getDataSubject` | Sì | Sì | lookup per token |
+| `listDataSubjects` | Sì | Sì | paginato |
+| `searchDataSubjects` | Sì | Sì | filtro per context/token/indici |
+| `updateDataSubject` | Sì | Sì | dominio vault |
+| `transitionDataSubjectContext` | Sì | Sì | dominio vault |
+| `listDataSubjectConsents` | Sì | Sì | dominio vault |
+| `createSubjectContext` | Sì | Sì | CRUD metadata |
+| `createDataTag` | Sì | Sì | CRUD metadata |
+| `createPrivacyPolicy` | Sì | Sì | CRUD metadata |
+| `createPolicyRule` | Sì | Sì | CRUD metadata |
+| `createConsentDefinition` | Sì | Sì | CRUD metadata |
+| `getMetadataSchema` | Sì | Sì | metadata schema |
+| `listPurgeQueue` | Sì | Sì | retention |
+| `login` | Sì | No | solo REST |
+| `createUser` | Sì | No | solo REST |
+| `createApiKey` | Sì | No | solo REST |
+| `postAction` | Sì | No | tracker REST |
+| `getDashboardOverview` | Sì | No | dashboard REST |
+| `getMetrics` | Sì | No | metrics REST |
+| `uploadFile` | Sì | No | multipart REST |
+| `listAuditLogs` | Sì | No | audit REST |
 
 <a id="esempio-wrapper-per-retry-custom-per-method"></a>
 ## Esempio wrapper per retry custom per method
